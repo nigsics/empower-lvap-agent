@@ -631,6 +631,9 @@ void EmpowerLVAPManager::send_status_port(EtherAddress sta, int iface) {
 
 }
 
+// This has the rssi vales sent to controller. But I do not understand why there 
+// is a separate timer here. The values will just get overwritten every timer fire, 
+// and only the last one will be availabel to send to the controller when requested using send_img_request
 void EmpowerLVAPManager::send_img_response(int type, uint32_t graph_id,
 		EtherAddress hwaddr, uint8_t channel, empower_bands_types band) {
 
@@ -833,6 +836,65 @@ void EmpowerLVAPManager::send_summary_trigger(SummaryTrigger * summary) {
 
 }
 
+
+//tag_for_nif
+// new one added by akhila
+void EmpowerLVAPManager::send_nif_stats_response(EtherAddress lvap, uint32_t nif_stats_id) {
+
+	EmpowerStationState ess = _lvaps.get(lvap);
+	MinstrelDstInfo *nfo = _rcs.at(ess._iface_id)->neighbors()->findp(lvap);
+
+	if (!nfo) {
+		click_chatter("%{element} :: %s :: no rate information for %s",
+					  this,
+					  __func__,
+					  lvap.unparse().c_str());
+		return;
+	}
+
+	int len = sizeof(empower_nif_stats_response) + nfo->rates.size() * sizeof(nif_stats_entry);
+	WritablePacket *p = Packet::make(len);
+
+	if (!p) {
+		click_chatter("%{element} :: %s :: cannot make packet!",
+					  this,
+					  __func__);
+		return;
+	}
+
+	memset(p->data(), 0, p->length());
+
+	empower_nif_stats_response *nif_stats = (struct empower_nif_stats_response *) (p->data());
+	nif_stats->set_version(_empower_version);
+	nif_stats->set_length(len);
+	nif_stats->set_type(EMPOWER_PT_NIF_STATS_RESPONSE);
+	nif_stats->set_seq(get_next_seq());
+	nif_stats->set_nif_stats_id(nif_stats_id);
+	nif_stats->set_wtp(_wtp);
+	nif_stats->set_nb_entries(nfo->rates.size());
+
+	uint8_t *ptr = (uint8_t *) nif_stats;
+	ptr += sizeof(struct empower_nif_stats_response);
+	uint8_t *end = ptr + (len - sizeof(struct empower_nif_stats_response));
+	// One entry for each rate for each lvap 
+	for (int i = 0; i < nfo->rates.size(); i++) {
+		assert (ptr <= end);
+		nif_stats_entry *entry = (nif_stats_entry *) ptr;
+		entry->set_rate(nfo->rates[i]);
+		entry->set_prob((uint32_t) nfo->probability[i]);
+		entry->set_cur_prob((uint32_t) nfo->cur_prob[i]);
+
+		entry->set_hist_succ((uint64_t) nfo->hist_successes[i]);
+		entry->set_hist_atmpts((uint64_t) nfo->hist_attempts[i]);
+		entry->set_succ((uint32_t) nfo->last_successes[i]);
+		entry->set_atmpts((uint32_t) nfo->last_attempts[i]);
+		entry->set_acked_bytes((uint64_t) nfo->last_acked_bytes[i]);
+		entry->set_hist_acked_bytes((uint64_t) nfo->hist_acked_bytes[i]);
+		ptr += sizeof(struct nif_stats_entry);
+	}
+	send_message(p);
+}
+
 void EmpowerLVAPManager::send_lvap_stats_response(EtherAddress lvap, uint32_t lvap_stats_id) {
 
 	EmpowerStationState ess = _lvaps.get(lvap);
@@ -879,15 +941,19 @@ void EmpowerLVAPManager::send_lvap_stats_response(EtherAddress lvap, uint32_t lv
 		entry->set_cur_prob((uint32_t) nfo->cur_prob[i]);
 		ptr += sizeof(struct lvap_stats_entry);
 	}
-
 	send_message(p);
 
 }
 
+//tag_for_nif
+// Tis is frame size and number of frame sof that size received from the gateway for a particular station sta
+// I will need to send a request for each station 
 void EmpowerLVAPManager::send_counters_response(EtherAddress sta, uint32_t counters_id) {
 
+	// Get transmission policy
 	TxPolicyInfo * txp = get_txp(sta);
 
+	// If transmission policy not available
 	if (!txp) {
 		click_chatter("%{element} :: %s :: unable to find TXP for station %s!",
 					  this,
@@ -896,12 +962,15 @@ void EmpowerLVAPManager::send_counters_response(EtherAddress sta, uint32_t count
 		return;
 	}
 
+	// Length of the writable pkt ?? Why this length ??
 	int len = sizeof(empower_counters_response);
-	len += txp->_tx.size() * 6; // the tx samples
-	len += txp->_rx.size() * 6; // the rx samples
+	len += txp->_tx.size() * 6; // _tx is a HashTable
+ 	len += txp->_rx.size() * 6; // _rx is a HashTable
 
+	// Create a writable pkt of this length
 	WritablePacket *p = Packet::make(len);
 
+	// If unable to create this writable pkt
 	if (!p) {
 		click_chatter("%{element} :: %s :: cannot make packet!",
 					  this,
@@ -909,8 +978,10 @@ void EmpowerLVAPManager::send_counters_response(EtherAddress sta, uint32_t count
 		return;
 	}
 
+	// Set the data portion of the writable pkt to all zeros
 	memset(p->data(), 0, p->length());
 
+	// Typecast the data of the pkt to a structure of type empower_counters_response
 	empower_counters_response *counters = (struct empower_counters_response *) (p->data());
 	counters->set_version(_empower_version);
 	counters->set_length(len);
@@ -919,19 +990,20 @@ void EmpowerLVAPManager::send_counters_response(EtherAddress sta, uint32_t count
 	counters->set_counters_id(counters_id);
 	counters->set_wtp(_wtp);
 	counters->set_sta(sta);
-	counters->set_nb_tx(txp->_tx.size());
-	counters->set_nb_rx(txp->_rx.size());
+	counters->set_nb_tx(txp->_tx.size()); // txp->_tx.size() is uint16_t // _tx is a HashTable
+	counters->set_nb_rx(txp->_rx.size()); // txp->_rx.size() is uint16_t // _rx is a HashTable
 
 	uint8_t *ptr = (uint8_t *) counters;
 	ptr += sizeof(struct empower_counters_response);
 
 	uint8_t *end = ptr + (len - sizeof(struct empower_counters_response));
 
+	// Iterate over the HashTable
 	for (CBytesIter iter = txp->_tx.begin(); iter.live(); iter++) {
 		assert (ptr <= end);
 		counters_entry *entry = (counters_entry *) ptr;
-		entry->set_size(iter.key());
-		entry->set_count(iter.value());
+		entry->set_size(iter.key()); // Frame size in bytes
+		entry->set_count(iter.value()); // Num. of frames
 		ptr += sizeof(struct counters_entry);
 	}
 
@@ -943,6 +1015,7 @@ void EmpowerLVAPManager::send_counters_response(EtherAddress sta, uint32_t count
 		ptr += sizeof(struct counters_entry);
 	}
 
+	// Where is this message sent ? to the controller ? to the station ? 
 	send_message(p);
 
 }
@@ -1892,6 +1965,14 @@ int EmpowerLVAPManager::handle_uimg_request(Packet *p, uint32_t offset) {
 	return 0;
 }
 
+//tag_for_nif
+int EmpowerLVAPManager::handle_nif_stats_request(Packet *p, uint32_t offset) {
+	struct empower_nif_stats_request *q = (struct empower_nif_stats_request *) (p->data() + offset);
+	EtherAddress sta = q->sta();
+	send_nif_stats_response(sta, q->nif_stats_id());
+	return 0;
+}
+
 int EmpowerLVAPManager::handle_lvap_stats_request(Packet *p, uint32_t offset) {
 	struct empower_lvap_stats_request *q = (struct empower_lvap_stats_request *) (p->data() + offset);
 	EtherAddress sta = q->sta();
@@ -2102,6 +2183,10 @@ void EmpowerLVAPManager::push(int, Packet *p) {
 		case EMPOWER_PT_LVAP_STATS_REQUEST:
 			handle_lvap_stats_request(p, offset);
 			break;
+		//tag_for_nif
+		case EMPOWER_PT_NIF_STATS_REQUEST:
+			handle_nif_stats_request(p, offset);
+			break;			
 		case EMPOWER_PT_WIFI_STATS_REQUEST:
 			handle_wifi_stats_request(p, offset);
 			break;

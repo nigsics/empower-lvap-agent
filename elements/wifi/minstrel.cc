@@ -26,6 +26,7 @@
 #include <elements/wifi/availablerates.hh>
 #include "minstrel.hh"
 
+
 CLICK_DECLS
 
 Minstrel::Minstrel() 
@@ -36,6 +37,7 @@ Minstrel::Minstrel()
 Minstrel::~Minstrel() {
 }
 
+//tag_for_nif
 void Minstrel::run_timer(Timer *)
 {
 	for (MinstrelIter iter = _neighbors.begin(); iter.live(); iter++) {
@@ -83,18 +85,21 @@ void Minstrel::run_timer(Timer *)
 			} else {
 				nfo->sample_limit[i] = -1;
 			}
-		}
+		}// End of for loop iterating over rates1
 		for (i = 0; i < nfo->rates.size(); i++) {
+			// Find the rate at which I get the highest cur_tp
 			if (max_tp < nfo->cur_tp[i]) {
 				index_max_tp = i;
 				max_tp = nfo->cur_tp[i];
 			}
+			// Find the rate at which I get the highest ewma probability of success 
 			if (max_prob < nfo->probability[i]) {
 				index_max_prob = i;
 				max_prob = nfo->probability[i];
 			}
-		}
+		}// End of for loop iterating over rates2
 		max_tp = 0;
+		// Find the rate at which I achieve the second maximum throughput
 		for (i = 0; i < nfo->rates.size(); i++) {
 			if (i == index_max_tp) {
 				continue;
@@ -103,7 +108,7 @@ void Minstrel::run_timer(Timer *)
 				index_max_tp2 = i;
 				max_tp = nfo->cur_tp[i];
 			}
-		}
+		}// End of for loop iterating over rates3
 		nfo->max_tp_rate = index_max_tp;
 		nfo->max_tp_rate2 = index_max_tp2;
 		nfo->max_prob_rate = index_max_prob;
@@ -167,6 +172,12 @@ void Minstrel::process_feedback(Packet *p_in) {
 					ceh->rate);
 		}
 		return;
+	}
+	//tag_for_nif
+	int ndx = rate_index(rate);
+	if (ndx >= 0) {
+		nfo->last_acked_bytes[ndx] += p_in->length();
+		nfo->hist_acked_bytes[ndx] += p_in->length();
 	}
 	nfo->add_result(ceh->rate, ceh->max_tries, success);
 	return;

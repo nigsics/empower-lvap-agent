@@ -61,6 +61,11 @@ enum empower_packet_types {
     EMPOWER_PT_DEL_MCAST_ADDR = 0x49,               // ac -> wtp
     EMPOWER_PT_DEL_MCAST_RECEIVER = 0x50,           // ac -> wtp
 
+    //tag_for_nif
+    // NIF stats
+    EMPOWER_PT_NIF_STATS_REQUEST = 0x100,           // ac -> wtp
+    EMPOWER_PT_NIF_STATS_RESPONSE = 0x101,          // wtp -> ac    
+
     // Link Stats
     EMPOWER_PT_LVAP_STATS_REQUEST = 0x30,           // ac -> wtp
     EMPOWER_PT_LVAP_STATS_RESPONSE = 0x31,          // wtp -> ac
@@ -259,6 +264,32 @@ public:
     EtherAddress sta()           { return EtherAddress(_sta); }
 } CLICK_SIZE_PACKED_ATTRIBUTE;
 
+//tag_for_nif
+/* nif stats request packet format */
+struct empower_nif_stats_request : public empower_header {
+private:
+  uint32_t _nif_stats_id;  /* Module id (int) */
+  uint8_t  _sta[6];     /* EtherAddress */
+
+public:
+    uint32_t     nif_stats_id() { return ntohl(_nif_stats_id); }
+    EtherAddress sta()           { return EtherAddress(_sta); }
+} CLICK_SIZE_PACKED_ATTRIBUTE;
+
+//tag_for_nif
+/* NIF stats response packet format */
+struct empower_nif_stats_response : public empower_header {
+private:
+  uint32_t _nif_stats_id;  /* Module id (int) */
+  uint8_t  _wtp[6];         /* EtherAddress */
+  uint16_t _nb_entries;     /* Int */
+public:
+  void set_nif_stats_id(uint32_t nif_stats_id) { _nif_stats_id = htonl(nif_stats_id); }
+  void set_wtp(EtherAddress wtp)                 { memcpy(_wtp, wtp.data(), 6); }
+  void set_nb_entries(uint16_t nb_entries)       { _nb_entries = htons(nb_entries); }
+} CLICK_SIZE_PACKED_ATTRIBUTE;
+
+
 /* link stats response packet format */
 struct empower_lvap_stats_response : public empower_header {
 private:
@@ -269,6 +300,35 @@ public:
   void set_lvap_stats_id(uint32_t lvap_stats_id) { _lvap_stats_id = htonl(lvap_stats_id); }
   void set_wtp(EtherAddress wtp)                 { memcpy(_wtp, wtp.data(), 6); }
   void set_nb_entries(uint16_t nb_entries)       { _nb_entries = htons(nb_entries); }
+} CLICK_SIZE_PACKED_ATTRIBUTE;
+
+// tag_for_nif
+/* nif_stats entry format */
+struct nif_stats_entry {
+  private:
+    uint8_t  _rate;     /* Rate in units of 500kbps or MCS index */
+    uint16_t _flags;    /* Flags (empower_rate_flags) */
+    uint32_t _prob;     /* Probability [0-18000] */
+    uint32_t _cur_prob;     /* Probability [0-18000] */
+    uint64_t _hist_successes; /* Counting up perpetually */
+    uint64_t _hist_attempts; /* Counting up perpetually */
+    uint32_t _last_successes; /* Successful attempts in the last 500 ms by Minstrel */
+    uint32_t _last_attempts; /* Number of attempts in the last 500 ms by Minstrel */
+    uint64_t _last_acked_bytes; /* Number of bytes acked in the last 500 ms as observed at Minstrel */
+    uint64_t _hist_acked_bytes; /* Counting up perpetually the number of acked bytes */
+
+  public:
+    void set_flags(uint16_t flags)          { _flags = htons(flags); }
+    void set_flag(uint16_t f)               { _flags = htons(ntohs(_flags) | f); }
+    void set_rate(uint8_t rate)             { _rate = rate; }
+    void set_prob(uint32_t prob)            { _prob = htonl(prob); }
+    void set_cur_prob(uint32_t cur_prob)    { _cur_prob = htonl(cur_prob); }
+    void set_hist_succ(uint64_t hist_successes) { _hist_successes = htonl(hist_successes); }
+    void set_hist_atmpts(uint64_t hist_attempts) { _hist_attempts = htonl(hist_attempts); }
+    void set_succ(uint32_t last_successes) { _last_successes = htonl(last_successes); }
+    void set_atmpts(uint32_t last_attempts) { _last_attempts = htonl(last_attempts); }
+    void set_acked_bytes(uint64_t last_acked_bytes) { _last_acked_bytes = htonl(last_acked_bytes); }
+    void set_hist_acked_bytes(uint64_t hist_acked_bytes) { _hist_acked_bytes = htonl(hist_acked_bytes); }
 } CLICK_SIZE_PACKED_ATTRIBUTE;
 
 /* lvap_stats entry format */

@@ -275,6 +275,8 @@ public:
 	int handle_del_port(Packet *, uint32_t);
 	int handle_frames_request(Packet *, uint32_t);
 	int handle_lvap_stats_request(Packet *, uint32_t);
+	//tag_for_nif
+	int handle_nif_stats_request(Packet *, uint32_t);
 	int handle_wifi_stats_request(Packet *, uint32_t);
 	int handle_incom_mcast_addr_response(Packet *, uint32_t);
 	int handle_wtp_counters_request(Packet *, uint32_t);
@@ -304,6 +306,8 @@ public:
 	void send_caps();
 	void send_rssi_trigger(uint32_t, uint32_t, uint8_t);
 	void send_summary_trigger(SummaryTrigger *);
+	//tag_for_nif
+	void send_nif_stats_response(EtherAddress, uint32_t);
 	void send_lvap_stats_response(EtherAddress, uint32_t);
 	void send_incomming_mcast_address (EtherAddress, int);
 	void send_wtp_counters_response(uint32_t);

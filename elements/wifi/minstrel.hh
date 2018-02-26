@@ -33,6 +33,10 @@ public:
 	Vector<int> cur_tp;
 	Vector<int> probability;
 	Vector<int> sample_limit;
+	//tag_for_nif
+	Vector<int> last_acked_bytes;
+	Vector<int> hist_acked_bytes;
+
 	int packet_count;
 	int sample_count;
 	int max_tp_rate;
@@ -52,6 +56,9 @@ public:
 		cur_tp = Vector<int>();
 		probability = Vector<int>();
 		sample_limit = Vector<int>();
+		//tag_for_nif
+		last_acked_bytes = Vector<int>();
+		hist_acked_bytes = Vector<int>();
 		packet_count = 0;
 		sample_count = 0;
 		max_tp_rate = 0;
@@ -74,6 +81,10 @@ public:
 		cur_tp = Vector<int>(supported.size(), 0);
 		probability = Vector<int>(supported.size(), 0);
 		sample_limit = Vector<int>(supported.size(), -1);
+		//tag_for_nif
+		last_acked_bytes = Vector<int>(supported.size(), 0);
+		hist_acked_bytes = Vector<int>(supported.size(), 0);
+
 		packet_count = 0;
 		sample_count = 0;
 		max_tp_rate = 0;
