@@ -63,8 +63,8 @@ enum empower_packet_types {
 
     //tag_for_nif
     // NIF stats
-    EMPOWER_PT_NIF_STATS_REQUEST = 0x100,           // ac -> wtp
-    EMPOWER_PT_NIF_STATS_RESPONSE = 0x101,          // wtp -> ac    
+    EMPOWER_PT_NIF_STATS_REQUEST = 0x90,           // ac -> wtp
+    EMPOWER_PT_NIF_STATS_RESPONSE = 0x91,          // wtp -> ac    
 
     // Link Stats
     EMPOWER_PT_LVAP_STATS_REQUEST = 0x30,           // ac -> wtp
