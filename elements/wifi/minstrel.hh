@@ -34,8 +34,9 @@ public:
 	Vector<int> probability;
 	Vector<int> sample_limit;
 	//tag_for_nif
-	Vector<int> last_acked_bytes;
-	Vector<int> hist_acked_bytes;
+	Vector<long> last_acked_bytes;
+	Vector<unsigned long long> hist_acked_bytes;
+	Vector<long> acked_bytes;
 
 	int packet_count;
 	int sample_count;
@@ -57,8 +58,9 @@ public:
 		probability = Vector<int>();
 		sample_limit = Vector<int>();
 		//tag_for_nif
-		last_acked_bytes = Vector<int>();
-		hist_acked_bytes = Vector<int>();
+		last_acked_bytes = Vector<long>();
+		hist_acked_bytes = Vector<unsigned long long>();
+		acked_bytes = Vector<long>();
 		packet_count = 0;
 		sample_count = 0;
 		max_tp_rate = 0;
@@ -82,8 +84,9 @@ public:
 		probability = Vector<int>(supported.size(), 0);
 		sample_limit = Vector<int>(supported.size(), -1);
 		//tag_for_nif
-		last_acked_bytes = Vector<int>(supported.size(), 0);
-		hist_acked_bytes = Vector<int>(supported.size(), 0);
+		last_acked_bytes = Vector<long>(supported.size(), 0);
+		hist_acked_bytes = Vector<unsigned long long>(supported.size(), 0);
+		acked_bytes = Vector<long>(supported.size(), 0);
 
 		packet_count = 0;
 		sample_count = 0;
@@ -102,11 +105,12 @@ public:
 		}
 		return (ndx == rates.size()) ? -1 : ndx;
 	}
-	void add_result(int rate, int tries, int success) {
+	void add_result(int rate, int tries, int success, long data_bytes) {
 		int ndx = rate_index(rate);
 		if (ndx >= 0) {
 			successes[ndx] += success;
 			attempts[ndx] += tries;
+			acked_bytes[ndx] += data_bytes;
 		}
 	}
 	String unparse() {

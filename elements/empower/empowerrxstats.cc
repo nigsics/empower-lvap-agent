@@ -128,6 +128,8 @@ void EmpowerRXStats::run_timer(Timer *) {
 	_timer.schedule_after_msec(_period);
 }
 
+// Pkt received event. My understanding is that this contains 
+// all sniff received pkts from both interfaces. 
 Packet *
 EmpowerRXStats::simple_action(Packet *p) {
 

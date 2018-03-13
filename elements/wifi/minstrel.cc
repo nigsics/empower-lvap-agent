@@ -73,11 +73,15 @@ void Minstrel::run_timer(Timer *)
 				p = ((p * (100 - _ewma_level)) + (nfo->probability[i] * _ewma_level)) / 100;
 				nfo->probability[i] = p;
 				nfo->cur_tp[i] = p * (1000000 / usecs);
+				nfo->hist_acked_bytes[i] += (unsigned long long)nfo->acked_bytes[i];
 			}
 			nfo->last_successes[i] = nfo->successes[i];
 			nfo->last_attempts[i] = nfo->attempts[i];
+			nfo->last_acked_bytes[i] = nfo->acked_bytes[i];
+
 			nfo->successes[i] = 0;
 			nfo->attempts[i] = 0;
+			nfo->acked_bytes[i] = 0;
 			/* Sample less often below the 10% chance of success.
 			 * Sample less often above the 95% chance of success. */
 			if ((nfo->probability[i] > 17100) || (nfo->probability[i] < 1800)) {
@@ -174,12 +178,14 @@ void Minstrel::process_feedback(Packet *p_in) {
 		return;
 	}
 	//tag_for_nif
-	int ndx = rate_index(rate);
-	if (ndx >= 0) {
-		nfo->last_acked_bytes[ndx] += p_in->length();
-		nfo->hist_acked_bytes[ndx] += p_in->length();
-	}
-	nfo->add_result(ceh->rate, ceh->max_tries, success);
+	// I need data length here not the full ethernet frame length. 
+	// How do I get that ?
+	//long data_bytes = p_in->length();
+	// Not sure if this is the correct way to get the data length...   
+	uint8_t *data_begin_ptr = (uint8_t *) p_in->data() + _offset;
+	uint8_t *data_end_ptr = (uint8_t *) p_in->end_data() + _offset;
+	long data_bytes = (data_end_ptr - data_begin_ptr) * (sizeof(unsigned char))
+	nfo->add_result(ceh->rate, ceh->max_tries, success, data_bytes);
 	return;
 }
 
