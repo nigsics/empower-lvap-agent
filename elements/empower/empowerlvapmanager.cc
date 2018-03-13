@@ -840,7 +840,6 @@ void EmpowerLVAPManager::send_summary_trigger(SummaryTrigger * summary) {
 //tag_for_nif
 // new one added by akhila
 void EmpowerLVAPManager::send_nif_stats_response(EtherAddress lvap, uint32_t nif_stats_id) {
-
 	EmpowerStationState ess = _lvaps.get(lvap);
 	MinstrelDstInfo *nfo = _rcs.at(ess._iface_id)->neighbors()->findp(lvap);
 
@@ -889,6 +888,9 @@ void EmpowerLVAPManager::send_nif_stats_response(EtherAddress lvap, uint32_t nif
 		entry->set_succ((uint32_t) nfo->last_successes[i]);
 		entry->set_atmpts((uint32_t) nfo->last_attempts[i]);
 		entry->set_acked_bytes((uint64_t) nfo->last_acked_bytes[i]);
+
+		click_chatter("hist_acked_bytes is %d", nfo->hist_acked_bytes[i]);
+
 		entry->set_hist_acked_bytes((uint64_t) nfo->hist_acked_bytes[i]);
 		ptr += sizeof(struct nif_stats_entry);
 	}

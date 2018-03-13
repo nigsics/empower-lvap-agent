@@ -323,12 +323,12 @@ struct nif_stats_entry {
     void set_rate(uint8_t rate)             { _rate = rate; }
     void set_prob(uint32_t prob)            { _prob = htonl(prob); }
     void set_cur_prob(uint32_t cur_prob)    { _cur_prob = htonl(cur_prob); }
-    void set_hist_succ(uint64_t hist_successes) { _hist_successes = htonl(hist_successes); }
-    void set_hist_atmpts(uint64_t hist_attempts) { _hist_attempts = htonl(hist_attempts); }
+    void set_hist_succ(uint64_t hist_successes) { _hist_successes = htobe64(hist_successes); }
+    void set_hist_atmpts(uint64_t hist_attempts) { _hist_attempts = htobe64(hist_attempts); }
     void set_succ(uint32_t last_successes) { _last_successes = htonl(last_successes); }
     void set_atmpts(uint32_t last_attempts) { _last_attempts = htonl(last_attempts); }
-    void set_acked_bytes(uint64_t last_acked_bytes) { _last_acked_bytes = htonl(last_acked_bytes); }
-    void set_hist_acked_bytes(uint64_t hist_acked_bytes) { _hist_acked_bytes = htonl(hist_acked_bytes); }
+    void set_acked_bytes(uint64_t last_acked_bytes) { _last_acked_bytes = htobe64(last_acked_bytes); }
+    void set_hist_acked_bytes(uint64_t hist_acked_bytes) { _hist_acked_bytes = htobe64(hist_acked_bytes); }
 } CLICK_SIZE_PACKED_ATTRIBUTE;
 
 /* lvap_stats entry format */

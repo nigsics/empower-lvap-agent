@@ -184,7 +184,7 @@ void Minstrel::process_feedback(Packet *p_in) {
 	// Not sure if this is the correct way to get the data length...   
 	uint8_t *data_begin_ptr = (uint8_t *) p_in->data() + _offset;
 	uint8_t *data_end_ptr = (uint8_t *) p_in->end_data() + _offset;
-	long data_bytes = (data_end_ptr - data_begin_ptr) * (sizeof(unsigned char))
+	long data_bytes = (data_end_ptr - data_begin_ptr) * (sizeof(unsigned char));
 	nfo->add_result(ceh->rate, ceh->max_tries, success, data_bytes);
 	return;
 }
