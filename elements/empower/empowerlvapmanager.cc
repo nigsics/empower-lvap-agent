@@ -650,8 +650,8 @@ void EmpowerLVAPManager::send_img_response(int type, uint32_t graph_id,
 	}
 
 	// Select stations active on the specified resource element (iface_id)
-
-	Vector<DstInfo> neighbors;
+	// DstInfo.update should be called here 
+ 	Vector<DstInfo> neighbors;
 	_ers->lock.acquire_read();
 
 	if (type == EMPOWER_PT_UCQM_RESPONSE) {
@@ -659,6 +659,9 @@ void EmpowerLVAPManager::send_img_response(int type, uint32_t graph_id,
 			if (iter.value()._iface_id != iface_id) {
 				continue;
 			}
+			// tag_for_nif
+			iter.value().update();
+
 			neighbors.push_back(iter.value());
 		}
 	} else {
@@ -666,6 +669,9 @@ void EmpowerLVAPManager::send_img_response(int type, uint32_t graph_id,
 			if (iter.value()._iface_id != iface_id) {
 				continue;
 			}
+			// tag_for_nif
+			iter.value().update();
+						
 			neighbors.push_back(iter.value());
 		}
 	}

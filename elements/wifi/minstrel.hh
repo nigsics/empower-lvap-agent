@@ -110,6 +110,8 @@ public:
 		if (ndx >= 0) {
 			successes[ndx] += success;
 			attempts[ndx] += tries;
+			if (success == 0)
+				data_bytes = 0;
 			acked_bytes[ndx] += data_bytes;
 		}
 	}

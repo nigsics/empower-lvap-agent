@@ -68,7 +68,7 @@ void send_rssi_trigger_callback(Timer *timer, void *data) {
 
 EmpowerRXStats::EmpowerRXStats() :
 		_el(0), _timer(this), _signal_offset(0), _period(500),
-		_sma_period(13), _max_silent_window_count(10), _debug(false) {
+		_sma_period(13), _max_silent_window_count(50), _debug(false) {
 
 }
 
@@ -101,7 +101,10 @@ void EmpowerRXStats::run_timer(Timer *) {
 	for (NTIter iter = stas.begin(); iter.live();) {
 		// Update stats
 		DstInfo *nfo = &iter.value();
-		nfo->update();
+
+		// tag_for_nif
+		//nfo->update();
+
 		// Delete stale entries
 		if (nfo->_silent_window_count > _max_silent_window_count) {
 			iter = stas.erase(iter);
@@ -113,7 +116,10 @@ void EmpowerRXStats::run_timer(Timer *) {
 	for (NTIter iter = aps.begin(); iter.live();) {
 		// Update aps
 		DstInfo *nfo = &iter.value();
-		nfo->update();
+
+		// tag_for_nif
+		//nfo->update();
+
 		// Delete stale entries
 		if (nfo->_silent_window_count > _max_silent_window_count) {
 			iter = aps.erase(iter);

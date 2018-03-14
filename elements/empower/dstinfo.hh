@@ -44,10 +44,15 @@ public:
 		delete _sma_rssi;
 	}
 
+	// This update is called form empowerrxstats in run_timer
 	void update() {
+		 //number of pkts over which rssi is being meaured. Upcouter
 		_hist_packets += _packets;
+		// average rssi over the time between 2 update calls 
 		_last_rssi = (_packets > 0) ? _accum_rssi / (double) _packets : 0;
+		// std of rssi over the time between 2 update calls 
 		_last_std = (_packets > 0) ? sqrt( (_squares_rssi / (double) _packets) - (_last_rssi * _last_rssi) ) : 0;
+		// number of pkts over the time between 2 update calls 
 		_last_packets = _packets;
 		if (_packets == 0) {
 			_silent_window_count++;
