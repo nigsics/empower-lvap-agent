@@ -139,7 +139,7 @@ ctrl :: Socket(TCP, 192.168.0.20, 4433, CLIENT true, VERBOSE true, RECONNECT_CAL
                                                                                                                                                                                  
   wifi_cl [0]                                                                                                                                                                    
     -> wifi_decap :: EmpowerWifiDecap(EL el, DEBUG false) 
-    -> ipClassifier;                                                                                                                    
+    -> ipClassifier1;                                                                                                                    
                                                                                                                                                                           
                                                                                                                                                                                  
   wifi_decap [1] -> ipClassifier2;  
